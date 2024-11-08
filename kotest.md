@@ -163,7 +163,7 @@ test end result, not how it was computed
 
 ## Match Data Classes
 
-<img src="compareByFields.png" />
+<img src="compareByFields.png" height="75%" width="75%"/>
 
 ---
 
@@ -186,7 +186,7 @@ assertSoftly {
 
 ## Add Field, Need To Update Test
 
-If `Fruit` Is Widely Used, Too Many Changes
+Suppose we need to add `Fruit.weight` 
 
 <img src="fragileTest.png" />
 
