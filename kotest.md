@@ -159,3 +159,69 @@ test end result, not how it was computed
 
 <img src="doubleNotPrecise.png" />
 
+---
+
+## Match Data Classes
+
+<img src="compareByFields.png" />
+
+---
+
+## Match Only Some Fields
+
+<img src="excludeFields.png" />
+
+---
+
+## Use `assertSoftly`
+
+```kotlin
+assertSoftly {
+    actual.color shouldBe "red"
+    actual.taste shouldBe "sweet"
+}
+```
+
+---
+
+## Add Field, Need To Update Test
+
+If `Fruit` Is Widely Used, Too Many Changes
+
+<img src="fragileTest.png" />
+
+---
+
+## Use Sample Instance 
+
+```kotlin
+val sampleFruit = Fruit("apple", "green", "sweet")
+
+"use sampleFruit" {
+ val tartRedFruit = sampleFruit.copy(
+     color = "red", 
+     taste = "tart"
+ )
+ canUseInSmoothie(tartRedFruit) shouldBe true
+}
+```
+
+---
+
+## use interface to reduce coupling
+
+```kotlin
+interface HasColorAndTaste {
+  val color: String
+  val taste: String
+}
+
+fun canUseInSmoothie(fruit: HasColorAndTaste): Boolean =
+  fruit.color.length + fruit.taste.length > 5
+
+val redAndSweet = object : HasColorAndTaste {
+    override val color: String = "red"
+    override val taste: String = "sweet"
+}
+canUseInSmoothie(redAndSweet) shouldBe true
+```
