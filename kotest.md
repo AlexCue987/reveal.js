@@ -19,7 +19,7 @@ not easy to see what exactly is different
 * Does Lots Of Things
 * Specialized Tools Are Better
 
-<img src="swiss-army-knife.png" />
+<img src="swiss-army-knife.png" height="50%" width="50%"/>
 
 ---
 
@@ -210,15 +210,15 @@ How to be more precise when matching data classes:
 
 ---
 
-## Match Data Classes
+How To Match Data Classes
 
-<img src="compareByFields.png" height="75%" width="75%"/>
+<img src="compareByFields.png" height="40%" width="40%"/>
 
 ---
 
-## Match Only Some Fields
+How To Match Only Some Fields
 
-<img src="excludeFields.png" />
+<img src="excludeFields.png"  height="40%" width="40%"/>
 
 ---
 
@@ -241,37 +241,37 @@ Let's talk more about tests that are easy to maintain.
 When a change to code causes too many changes to tests, this may be a code smell.
 <br/>
 <br/>
-We might need to refactor.
+We might need to refactor the code, not change tests.
 
 ---
 
 Tests can be fragile because tight coupling in code being tested
 
-<img src="fragile-design.png" />
+<img src="fragile-design.png"  height="75%" width="75%"/>
 
 ---
 
 Add an irrelevant field, need to update test
 
-<img src="add-field-to-test.png" />
+<img src="add-field-to-test.png"  height="75%" width="75%"/>
 
 ---
 
 Use exemplar instance and `copy`
 
-<img src="use-exemplar-instance.png" />
+<img src="use-exemplar-instance.png"  height="75%" width="75%"/>
 
 ---
 
 `canContain` should depend only on dimensions of the box and the element
 
-<img src="pan-in-box.png" />
+<img src="pan-in-box.png"  height="50%" width="50%"/>
 
 ---
 
 so let's refactor our code
 
-<img src="simpler-with-interface.png" />
+<img src="simpler-with-interface.png"  height="75%" width="75%"/>
 
 ---
 
