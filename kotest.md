@@ -401,7 +401,7 @@ Let's split it
 ---
 
 ```kotlin
-"upsert does not change some rows" {
+"upsert does not change rows it shouldn't" {
     val (rowsToKeepUnchanged, rowsToBeChanged) = dao.getAll()
         .partitionBy {
             it.name !in rowsToUpsert.map { it.name }
