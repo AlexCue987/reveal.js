@@ -4,10 +4,82 @@
 
 ---
 
-## TL;DR `shouldBe` Is A Swiss Army Knife
+## First example: match lists
 
+```kotlin
+actual shouldBe expected
+```
+not easy to see what exactly is different
+
+<img src="match-lists0.png" />
+
+---
+
+* `shouldBe` Is A Swiss Army Knife
 * Does Lots Of Things
 * Specialized Tools Are Better
+
+<img src="swiss-army-knife.png" />
+
+---
+
+## It's a recurring problem
+## Let's do something about it
+
+I am not a visionary. I'm an engineer. I'm happy with the people who are wandering around looking at the stars but I am looking at the ground and I want to fix the pothole before I fall in.
+
+Linus Torvalds
+
+---
+
+## We've built a better Matcher
+
+<img src="match-ordered-lists0.png" />
+
+---
+
+## Match Two Slices
+
+<img src="match-two-slices.png" />
+
+---
+
+* Kotest is designed and built by a committee
+* Not very consistent, many redundancies
+* But it's a committee including practitioners like you and I, not only by visionaries
+* 377 contributors, 4.5K stars on GitHub
+* If you have a problem, maybe kotest already has a solution
+
+---
+
+
+## When Order Does Not Matter - be specific
+
+<img src="match-unordered-collections.png"  height="75%" width="75%"/>
+
+---
+
+## Non-Deterministic Order - be specific
+
+<img src="nonDeterministicOrder.png" />
+
+---
+
+## `BigDecimal` and scale - be specific
+
+test end result, not how it was computed
+
+<img src="BigDecimalScale.png" />
+
+---
+
+## Double Numbers Are Not Precise - be specific
+
+<img src="doubleNotPrecise.png" />
+
+---
+
+Let's see how a test evolves into a more specific and less fragile one
 
 ---
 
@@ -19,7 +91,6 @@ toPayload(myInstance) shouldBe
 ```
 
 ---
-## Matching JSON - Fragile Test
 
 the order of fields in JSON should not matter, but this fails:
 
@@ -60,7 +131,6 @@ actual shouldEqualJson
 
 ---
 
-
 ## why do we even need this test? what exactly are we verifying?
 
 We use a very common library to serialize objects to JSON. 
@@ -85,12 +155,14 @@ data class ZipCode(
     }
 }
 // val destination: ZipCode should serialize to JSON 
-// as "destination"="01234"
+// as "destination":"01234"
+// not as "destination":{"val":"1234"}
 ```
 
 ---
 
-## Is our custom serializer properly plugged in?
+- What we are testing: Is our custom serializer properly plugged in?
+- be as specific as possible: `shouldContainJsonKeyValue`
 
 ```kotlin
 val package = Package(
@@ -112,52 +184,10 @@ actual.shouldContainJsonKeyValue("destination", "01234")
 
 ---
 
-## Matching Collections
+How to be more specific when matching data classes:
 
-Just scratching the surface
-
-* `shouldContainExactly`
-* `shouldContainExactlyInAnyOrder`
-* and more...
-* some features are not released yet, waiting for 6.0
-
----
-
-## If Order Of Elements Matters
-
-<img src="shouldContainExactly.png" />
-
----
-
-## Match Two Slices
-
-<img src="shouldContainExactlyTwoSlices.png" />
-
----
-
-## When Order Does Not Matter
-
-<img src="shouldContainExactlyInAnyOrder.png" />
-
----
-
-## Non-Deterministic Order
-
-<img src="nonDeterministicOrder.png" />
-
----
-
-## `BigDecimal` and scale
-
-test end result, not how it was computed
-
-<img src="BigDecimalScale.png" />
-
----
-
-## Double Numbers Are Not Precise
-
-<img src="doubleNotPrecise.png" />
+* Ignore timestamps, identities, UUIDs, etc.
+* get good description of what exactly is different
 
 ---
 
