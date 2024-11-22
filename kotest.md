@@ -44,28 +44,43 @@ Linus Torvalds
 
 ---
 
+##### Lessons learned:
+
 * Kotest is designed and built by a committee
-* Not very consistent, many redundancies
-* But it's a committee including practitioners like you and I, not only by visionaries
+* Not very consistent, both inside and outside
+* But it's a committee of us practitioners 
 * 377 contributors, 4.5K stars on GitHub
 * If you have a problem, maybe kotest already has a solution
 
 ---
 
+Let's return to matching collections - kotest has much more to offer.
 
-## When Order Does Not Matter - be specific
+---
+
+Example of specific assertion: when order does not matter
+
+<img src="match-lists-ignoring-order.png">
+
+---
+
+If kotest cannot find a match, will search for similar elements
 
 <img src="match-unordered-collections.png"  height="75%" width="75%"/>
 
 ---
 
-## Non-Deterministic Order - be specific
+How to match ordered collections if order is not completely predictable - don't be too specific
 
 <img src="nonDeterministicOrder.png" />
 
 ---
 
-## `BigDecimal` and scale - be specific
+How to be not too specific when we match numbers
+
+---
+
+`BigDecimal` and scale - be specific enough, but not too much
 
 test end result, not how it was computed
 
@@ -73,17 +88,19 @@ test end result, not how it was computed
 
 ---
 
-## Double Numbers Are Not Precise - be specific
+Double Numbers Are Not Precise - be specific enough, but not too much
 
 <img src="doubleNotPrecise.png" />
 
 ---
 
-Let's see how a test evolves into a more specific and less fragile one
+Let's refactor a test to be more specific and less fragile
 
 ---
 
 ## Matching JSON - Naive Test
+
+Fragile: order of keys in JSON is not guaranteed
 
 ```kotlin
 toPayload(myInstance) shouldBe 
@@ -92,7 +109,9 @@ toPayload(myInstance) shouldBe
 
 ---
 
-the order of fields in JSON should not matter, but this fails:
+the order of fields in JSON should not matter
+<br/>
+but this test fails:
 
 ```kotlin
 """{"destination":"01234","send_to":"Jane Doe"}""" shouldBe 
@@ -120,12 +139,10 @@ the order of fields in JSON should not matter, but this fails:
 if we add a new field to the object being serialized, the test will fail:
 
 ```kotlin
-val actual = """{
-    "destination":"01234",
-    "send_to":"Jane Doe",
-    "weight":2.34}
-    """
-actual shouldEqualJson 
+
+toPayload(
+    MyPackage("01234", "Jane Doe", weight=2.34)
+) shouldEqualJson 
         """{"send_to":"Jane Doe","destination":"01234"}"""
 ```
 
@@ -156,16 +173,17 @@ data class ZipCode(
 }
 // val destination: ZipCode should serialize to JSON 
 // as "destination":"01234"
-// not as "destination":{"val":"1234"}
+// not as "destination":{"zip":"1234"}
 ```
 
 ---
 
-- What we are testing: Is our custom serializer properly plugged in?
-- be as specific as possible: `shouldContainJsonKeyValue`
+- What we are testing: is our custom serializer properly plugged in?
+- be as specific as possible
+- use `shouldContainJsonKeyValue`
 
 ```kotlin
-val package = Package(
+val package = MyPackage(
     destination = ZipCode(1234), 
     sendTo = "Jane Doe",
     weight = 2.34,
@@ -181,13 +199,14 @@ actual.shouldContainJsonKeyValue("destination", "01234")
 * tests will be precise and maintainable.
 * but is can be more effort to write them.
 * so it might or might not be worth it.
+* not a blanket recommendation
 
 ---
 
-How to be more specific when matching data classes:
+How to be more precise when matching data classes:
 
 * Ignore timestamps, identities, UUIDs, etc.
-* get good description of what exactly is different
+* need detailed description of what exactly is different
 
 ---
 
@@ -203,7 +222,9 @@ How to be more specific when matching data classes:
 
 ---
 
-## Use `assertSoftly`
+ `assertSoftly`
+<br/>
+<br/>
 
 ```kotlin
 assertSoftly {
@@ -214,44 +235,192 @@ assertSoftly {
 
 ---
 
-## Add Field, Need To Update Test
-
-Suppose we need to add `Fruit.weight` 
-
-<img src="fragileTest.png" />
+Let's talk more about tests that are easy to maintain.
+<br/>
+<br/>
+When a change to code causes too many changes to tests, this may be a code smell.
+<br/>
+<br/>
+We might need to refactor.
 
 ---
 
-## Use Sample Instance 
+Tests can be fragile because tight coupling in code being tested
+
+<img src="fragile-design.png" />
+
+---
+
+Add an irrelevant field, need to update test
+
+<img src="add-field-to-test.png" />
+
+---
+
+Use exemplar instance and `copy`
+
+<img src="use-exemplar-instance.png" />
+
+---
+
+`canContain` should depend only on dimensions of the box and the element
+
+<img src="pan-in-box.png" />
+
+---
+
+so let's refactor our code
+
+<img src="simpler-with-interface.png" />
+
+---
+
+writing self-explanatory durable tests
+
+---
+
+Let's test upserting some data into a table
+
+
+| name | before upsert | after upsert |
+|------|---------------|----------------|
+| apple| green         | green         |
+| banana| yellow        | green         |
+| cherry| -             | red           |
+
+---
+
+Simple test that validates too little
 
 ```kotlin
-val sampleFruit = Fruit("apple", "green", "sweet")
+// insert test data:
+// Fruit("apple", "green"),
+// Fruit("banana", "yellow"),
 
-"use sampleFruit" {
- val tartRedFruit = sampleFruit.copy(
-     color = "red", 
-     taste = "tart"
- )
- canUseInSmoothie(tartRedFruit) shouldBe true
+dao.upsert(listOf(
+    Fruit("banana", "green"),
+    Fruit("cherry", "red"),
+))
+
+dao.getAll().size shouldBe 3
+```
+---
+
+validate everything, not self-documenting
+
+```kotlin
+// insert test data:
+// Fruit("apple", "green"),
+// Fruit("banana", "yellow"),
+
+dao.upsert(listOf(
+    Fruit("banana", "green"),
+    Fruit("cherry", "red"),
+))
+
+dao.getAll() shouldContainExactlyInAnyOrder listOf(
+    Fruit("banana", "green"),
+    Fruit("cherry", "red"),
+    Fruit("apple", "green"),
+)
+```
+It might be good enough already, but if not...
+
+---
+
+If, and only if, we need more readable test
+
+
+```kotlin
+val rowsToUpsert = listOf(
+    Fruit("banana", "green"), 
+    Fruit("cherry", "red"),
+    )
+val rowsToKeepUnchanged = dao.getAll().filter { 
+    it.name !in rowsToUpsert.map{ it.name }
+}
+
+dao.upsert(rowsToUpsert)
+
+dao.getAll() shouldContainExactlyInAnyOrder 
+        rowsToKeepUnchanged + rowsToUpsert
+```
+
+---
+
+### Can we still get false positives?
+
+* `rowsToKeepUnchanged` can be empty
+* `rowsToUpsert` can be same as data already saved, or empty
+
+---
+
+Guardian assumptions aka prerequisites
+
+```kotlin
+val (rowsToKeepUnchanged, rowsToBeChanged) = dao.getAll()
+    .partitionBy {
+        it.name !in rowsToUpsert.map{ it.name }
+    }
+withClue("rows to be unchanged should not be empty") {
+    rowsToKeepUnchanged.shouldNotBeEmpty()
+}
+withClue("rows to be changed should not be empty") {
+    rowsToBeChanged.shouldNotBeEmpty()
+}
+withClue("rows to be changed should change") {
+    rowsToBeChanged shouldNotContainExactlyInAnyOrder
+            rowsToUpsert
 }
 ```
 
 ---
 
-## use interface to reduce coupling
+detailed matching of actual to expected 
 
 ```kotlin
-interface HasColorAndTaste {
-  val color: String
-  val taste: String
+assertAll {
+    withClue("rows should be unchanged") {
+        actual.shouldContainAll(rowsToKeepUnchanged)
+    }
+    withClue("rows should change") {
+        actual.shouldContainAll(rowsToChange)
+    }
+    actual shouldContainExactlyInAnyOrder
+            rowsToKeepUnchanged + rowsToUpsert
 }
-
-fun canUseInSmoothie(fruit: HasColorAndTaste): Boolean =
-  fruit.color.length + fruit.taste.length > 5
-
-val redAndSweet = object : HasColorAndTaste {
-    override val color: String = "red"
-    override val taste: String = "sweet"
-}
-canUseInSmoothie(redAndSweet) shouldBe true
 ```
+
+---
+
+Test is completely self-explanatory, but it is way too long.
+<br/>
+<br/>
+Let's split it
+
+---
+
+```kotlin
+"upsert does not change some rows" {
+    val (rowsToKeepUnchanged, rowsToBeChanged) = dao.getAll()
+        .partitionBy {
+            it.name !in rowsToUpsert.map { it.name }
+        }
+    withClue("rows to be unchanged should not be empty") {
+        rowsToKeepUnchanged.shouldNotBeEmpty()
+    }
+    assertAll {
+        withClue("rows should be unchanged") {
+            actual.shouldContainAll(rowsToKeepUnchanged)
+        }
+        actual shouldContainExactlyInAnyOrder
+                rowsToKeepUnchanged + rowsToUpsert
+    }
+}
+```
+
+---
+Thank you!
+<br/>
+<br/>
+Questions?

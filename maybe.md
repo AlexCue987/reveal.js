@@ -5,17 +5,13 @@ Let's now improve a test that does not validate enough.
 ---
 
 Let's test upserting some data into a table
-| name | color |
-|------|-------|
-| apple| green |
-| banana| yellow |
 
-After upsert:
-| name | color |
-|------|-------|
-| apple| green |
-| banana| green |
-| cherry| red |
+
+| name | before upsert | after upsert |
+|------|---------------|----------------|
+| apple| green         | green         |
+| banana| yellow        | green         |
+| cherry| -             | red           |
 
 ---
 Naive test that validates too little
@@ -34,7 +30,7 @@ dao.getAll().size shouldBe 3
 ```
 ---
 
-Complete test that validates everything, hard to understand
+validate everything, hard to understand
 
 ```kotlin
 // insert test data:
