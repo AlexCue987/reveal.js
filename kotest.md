@@ -4,12 +4,18 @@
 
 ---
 
-## First example: match lists
+Kotest is modern, flexible, and very powerful. When used properly, it can make our life much easier.
+
+<img src="many-tools.png" height="50%" width="50%"/>
+
+---
+
+#### First example: match lists where elements are data classes with many fieds
 
 ```kotlin
-actual shouldBe expected
+listOf(...) shouldBe listOf(...)
 ```
-not easy to see what exactly is different
+with `shouldBe`, not easy to see what exactly is different
 
 <img src="match-lists0.png" />
 
@@ -23,8 +29,8 @@ not easy to see what exactly is different
 
 ---
 
-## It's a recurring problem
-## Let's do something about it
+### It's a common problem
+#### Let's do something about it
 
 I am not a visionary. I'm an engineer. I'm happy with the people who are wandering around looking at the stars but I am looking at the ground and I want to fix the pothole before I fall in.
 
@@ -157,7 +163,7 @@ We should not be testing that library.
 
 ---
 
-## Real Life Example 
+## The need to unit test json 
 Passing Around Zip Codes
 
 ```kotlin
@@ -178,9 +184,8 @@ data class ZipCode(
 
 ---
 
-- What we are testing: is our custom serializer properly plugged in?
-- be as specific as possible
-- use `shouldContainJsonKeyValue`
+- We are testing if our custom serializer is properly plugged in
+- use the right tool - `shouldContainJsonKeyValue`
 
 ```kotlin
 val package = MyPackage(
@@ -218,7 +223,7 @@ How To Match Data Classes
 
 How To Match Only Some Fields
 
-<img src="excludeFields.png"  height="40%" width="40%"/>
+<img src="excludeFields.png"  height="70%" width="70%"/>
 
 ---
 
@@ -241,7 +246,7 @@ Let's talk more about tests that are easy to maintain.
 When a change to code causes too many changes to tests, this may be a code smell.
 <br/>
 <br/>
-We might need to refactor the code, not change tests.
+We might need to refactor the code.
 
 ---
 
@@ -290,22 +295,6 @@ Let's test upserting some data into a table
 
 ---
 
-Simple test that validates too little
-
-```kotlin
-// insert test data:
-// Fruit("apple", "green"),
-// Fruit("banana", "yellow"),
-
-dao.upsert(listOf(
-    Fruit("banana", "green"),
-    Fruit("cherry", "red"),
-))
-
-dao.getAll().size shouldBe 3
-```
----
-
 validate everything, not self-documenting
 
 ```kotlin
@@ -328,98 +317,97 @@ It might be good enough already, but if not...
 
 ---
 
-If, and only if, we need more readable test
-
+If, and only if, we need four more readable tests
 
 ```kotlin
-val rowsToUpsert = listOf(
-    Fruit("banana", "green"), 
-    Fruit("cherry", "red"),
+val actual = dao.getAll()
+
+withClue("should have rowToKeepAsIs") {
+    actual shouldContain(rowToKeepAsIs)
+}
+withClue("should have rowToUpdate") {
+    actual shouldContain(rowToUpdate)
+}
+withClue("should have rowToInsert") {
+    actual shouldContain(rowToInsert)
+}
+withClue("should not contain any other rows") {
+    actual shouldContainExactlyInAnyOrder listOf(
+        rowToKeepAsIs, rowToUpdate, rowToInsert
     )
-val rowsToKeepUnchanged = dao.getAll().filter { 
-    it.name !in rowsToUpsert.map{ it.name }
 }
-
-dao.upsert(rowsToUpsert)
-
-dao.getAll() shouldContainExactlyInAnyOrder 
-        rowsToKeepUnchanged + rowsToUpsert
 ```
 
 ---
 
-### Can we still get false positives?
+#### Flaky tests because race conditions
 
-* `rowsToKeepUnchanged` can be empty
-* `rowsToUpsert` can be same as data already saved, or empty
+- If something is 
+  - shared
+  - mutable
+- then we can have race conditions  
 
 ---
 
-Guardian assumptions aka prerequisites
+Mocking static methods can cause race conditions or break other tests, such as:
 
 ```kotlin
-val (rowsToKeepUnchanged, rowsToBeChanged) = dao.getAll()
-    .partitionBy {
-        it.name !in rowsToUpsert.map{ it.name }
-    }
-withClue("rows to be unchanged should not be empty") {
-    rowsToKeepUnchanged.shouldNotBeEmpty()
-}
-withClue("rows to be changed should not be empty") {
-    rowsToBeChanged.shouldNotBeEmpty()
-}
-withClue("rows to be changed should change") {
-    rowsToBeChanged shouldNotContainExactlyInAnyOrder
-            rowsToUpsert
-}
+mockkStatic(LocalDateTime::class)
+val localTime = LocalDateTime.of(2022, 4, 27, 12, 34, 56)
+every { LocalDateTime.now(any<Clock>()) } returns localTime
+```
+
+while code on another thread is using 
+```kotlin
+LocalDateTime.now()
 ```
 
 ---
 
-detailed matching of actual to expected 
+When we mock a static function, we mutate JVM. And when we run tests in parallel, we share that mutable resource.
+* either do not mutate
+* or do not share, run consecutively
+
+---
+
+#### Do not mutate shared resource
+
+Even though Kotest has tools to deal with this problem, we should consider designing it away:
+```kotlin
+class WallClockWrapper(
+    fun now() = LocalDateTime.now()
+)
+```
+This is a regular class, which we can inject into services, pass into functions, and easily mock. And we don't need to share that mock.
+
+---
+
+#### run consecutively
 
 ```kotlin
-assertAll {
-    withClue("rows should be unchanged") {
-        actual.shouldContainAll(rowsToKeepUnchanged)
-    }
-    withClue("rows should change") {
-        actual.shouldContainAll(rowsToChange)
-    }
-    actual shouldContainExactlyInAnyOrder
-            rowsToKeepUnchanged + rowsToUpsert
+@DoNotParallelize
+class MyTest: StringSpec() {
+    // do mockkStatic
 }
 ```
-
 ---
 
-Test is completely self-explanatory, but it is way too long.
-<br/>
-<br/>
-Let's split it
-
----
+Sometimes we must use @DoNotParallelize
 
 ```kotlin
-"upsert does not change rows it shouldn't" {
-    val (rowsToKeepUnchanged, rowsToBeChanged) = dao.getAll()
-        .partitionBy {
-            it.name !in rowsToUpsert.map { it.name }
-        }
-    withClue("rows to be unchanged should not be empty") {
-        rowsToKeepUnchanged.shouldNotBeEmpty()
-    }
-    assertAll {
-        withClue("rows should be unchanged") {
-            actual.shouldContainAll(rowsToKeepUnchanged)
-        }
-        actual shouldContainExactlyInAnyOrder
-                rowsToKeepUnchanged + rowsToUpsert
-    }
+@DoNotParallelize
+class TestUsingItemsTable: StringSpec() {
+    // setup/teardown test data in items table
+}
+
+@DoNotParallelize
+class AnotherTestUsingItemsTable: StringSpec() {
+    // setup/teardown test data in orders and items tables
 }
 ```
 
 ---
+
 Thank you!
 <br/>
 <br/>
