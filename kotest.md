@@ -42,13 +42,13 @@ Linus Torvalds
 ---
 
 ## We've built a better Matcher
-
+Test fails because elements are in wrong order
 <img src="match-ordered-lists0.png" />
 
 ---
 
 ## Match Two Slices
-
+Matcher finds two slices that match exactly
 <img src="match-two-slices.png" />
 
 ---
@@ -104,11 +104,13 @@ Similar matchers for temporal types
 
 ---
 
-Let's apply this knowledge - refactor a test to be more specific and less fragile
+Let's apply this knowledge.
+<br/>
+Scenario 1. refactor a test to be more specific and less fragile
 
 ---
 
-## Matching JSON - Naive Test
+## Scenario 1. Matching JSON - Naive Test
 
 Fragile: order of keys in JSON is not guaranteed
 
@@ -119,7 +121,7 @@ toPayload(myInstance) shouldBe
 
 ---
 
-the order of fields in JSON should not matter
+Scenario 1: the order of fields in JSON should not matter
 <br/>
 but this test fails:
 
@@ -130,7 +132,7 @@ but this test fails:
 
 ---
 
-## `shouldEqualJson` is Specialized, More Robust
+Scenario 1: `shouldEqualJson` is Specialized, More Robust
 
 ```kotlin
 """{
@@ -144,7 +146,7 @@ but this test fails:
 ---
 
 
-## `shouldEqualJson` is Specialized, More Robust, but
+Scenario 1: `shouldEqualJson` is Specialized, More Robust, but
 
 if we add a new field to the object being serialized, the test will fail:
 
@@ -158,7 +160,7 @@ toPayload(
 
 ---
 
-## why do we even need this test? what exactly are we verifying?
+#### Scenario 1: why do we even need this test? what exactly are we verifying?
 
 We use a very common library to serialize objects to JSON. 
 <br/>
@@ -167,7 +169,7 @@ We should not be testing that library.
 
 ---
 
-## The need to unit test json 
+#### Scenario 1: The need to unit test json 
 Passing Around Zip Codes
 
 ```kotlin
@@ -187,7 +189,7 @@ data class ZipCode(
 ```
 
 ---
-
+Scenario 1:
 - We are testing if our custom serializer is properly plugged in
 - use the right tool - `shouldContainJsonKeyValue`
 
@@ -251,6 +253,8 @@ assertSoftly {
 
 ---
 
+Scenario 2.
+<br/>
 Let's talk more about tests that are easy to maintain.
 <br/>
 <br/>
@@ -261,41 +265,55 @@ We might need to refactor the code.
 
 ---
 
-Tests can be fragile because tight coupling in code being tested
+Scenario 2: Tests can be fragile because tight coupling in code being tested
 
 <img src="canContain-works.png"  height="75%" width="75%"/>
 
 ---
 
-Add an irrelevant field, need to update test
-
-<img src="must-add-field.png"  height="75%" width="75%"/>
-
----
-
-Use exemplar instance and `copy`
-
-<img src="use-exemplar-instance.png"  height="75%" width="75%"/>
-
----
-
-`canContain` should depend only on dimensions of the box and the element
+Scenario 2: `canContain` should depend only on dimensions of the box and the element
 
 <img src="pan-in-box.png"  height="50%" width="50%"/>
 
 ---
 
-so let's refactor our code
+Scenario 2: Add an irrelevant field, need to update test
+
+<img src="must-add-field.png"  height="75%" width="75%"/>
+
+---
+
+Scenario 2: Use exemplar instance and `copy`
+
+<img src="use-exemplar-instance.png"  height="75%" width="75%"/>
+
+---
+
+Scenario 2: use interface to reduce coupling
+
+```kotlin
+   interface HasDimensions {
+      val length: Int
+      val width: Int
+      val height: Int
+   }
+   
+   fun HasDimensions.canContain(element: HasDimensions): Boolean { TODO() }
+```
+---
+
+Scenario 2: less fragile test
 
 <img src="simpler-with-interface.png"  height="75%" width="75%"/>
 
 ---
 
+Scenario 3.
 When writing self-explanatory tests helps to figure out what exactly failed.
 
 ---
 
-Let's test upserting some data into a table
+Scenario 3: Let's test upserting some data into a table
 
 
 | name | before upsert | after upsert |
@@ -306,7 +324,7 @@ Let's test upserting some data into a table
 
 ---
 
-validate everything, not self-documenting
+Scenario 3: validate everything in one test, not self-documenting
 
 ```kotlin
 // insert test data:
@@ -328,7 +346,7 @@ It might be good enough already, but if not...
 
 ---
 
-If, and only if, we need four more readable tests
+Scenario 3: If, and only if, we need four more readable tests
 
 ```kotlin
 val actual = dao.getAll()
