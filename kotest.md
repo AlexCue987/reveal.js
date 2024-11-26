@@ -4,7 +4,7 @@
 
 ---
 
-Kotest is modern, flexible, and very powerful. When used properly, it can make our life much easier.
+Kotest is modern, flexible, and very powerful. When used properly, it can make our life much easier. But sometimes we need to design away the need to use complex tools.
 
 <img src="many-tools.png" height="50%" width="50%"/>
 
@@ -70,13 +70,13 @@ Example of specific assertion: when order does not matter
 
 ---
 
-If kotest cannot find a match, will search for similar elements
+If kotest cannot find a match, it will search for similar elements
 
 <img src="match-unordered-collections.png"  height="75%" width="75%"/>
 
 ---
 
-How to match ordered collections if order is not completely predictable - don't be too specific
+How to match ordered collections if order is not completely predictable
 
 <img src="nonDeterministicOrder.png" />
 
@@ -208,6 +208,13 @@ actual.shouldContainJsonKeyValue("destination", "01234")
 
 ---
 
+Invest more effort in making tests more readable? 
+<br/>
+Or leave them as is.
+
+<img src="wall-with-tools.png" >
+---
+
 How to be more precise when matching data classes:
 
 * Ignore timestamps, identities, UUIDs, etc.
@@ -252,13 +259,13 @@ We might need to refactor the code.
 
 Tests can be fragile because tight coupling in code being tested
 
-<img src="fragile-design.png"  height="75%" width="75%"/>
+<img src="canContain-works.png"  height="75%" width="75%"/>
 
 ---
 
 Add an irrelevant field, need to update test
 
-<img src="add-field-to-test.png"  height="75%" width="75%"/>
+<img src="must-add-field.png"  height="75%" width="75%"/>
 
 ---
 
@@ -280,7 +287,7 @@ so let's refactor our code
 
 ---
 
-writing self-explanatory durable tests
+When writing self-explanatory tests helps to figure out what exactly failed.
 
 ---
 
@@ -322,16 +329,16 @@ If, and only if, we need four more readable tests
 ```kotlin
 val actual = dao.getAll()
 
-withClue("should have rowToKeepAsIs") {
+"should have rowToKeepAsIs" {
     actual shouldContain(rowToKeepAsIs)
 }
-withClue("should have rowToUpdate") {
+"should have rowToUpdate" {
     actual shouldContain(rowToUpdate)
 }
-withClue("should have rowToInsert") {
+"should have rowToInsert" {
     actual shouldContain(rowToInsert)
 }
-withClue("should not contain any other rows") {
+"should not contain any other rows" {
     actual shouldContainExactlyInAnyOrder listOf(
         rowToKeepAsIs, rowToUpdate, rowToInsert
     )
@@ -346,6 +353,29 @@ withClue("should not contain any other rows") {
   - shared
   - mutable
 - then we can have race conditions  
+
+Solutions?
+
+* either do not mutate
+* or do not share, run consecutively
+
+---
+
+Sometimes we must run consecutively, such as testing against Postgres.
+
+```kotlin
+@DoNotParallelize
+class TestUsingItemsTable: StringSpec() {
+    // setup/teardown test data in Items table
+    // Test CRUD against Items table
+}
+
+@DoNotParallelize
+class AnotherTestUsingItemsTable: StringSpec() {
+    // setup/teardown test data in Orders and Items tables
+    // test some joins of both tables
+}
+```
 
 ---
 
@@ -364,9 +394,11 @@ LocalDateTime.now()
 
 ---
 
-When we mock a static function, we mutate JVM. And when we run tests in parallel, we share that mutable resource.
-* either do not mutate
-* or do not share, run consecutively
+When we mock a static function, we may mutate a shared resource. And when we run tests in parallel, we share that mutable resource.
+<br/>
+We can use `@DoNotParallelize` as before.
+<br/>
+Or we can design away the need to mutate.
 
 ---
 
@@ -382,31 +414,6 @@ This is a regular class, which we can inject into services, pass into functions,
 
 ---
 
-#### run consecutively
-
-```kotlin
-@DoNotParallelize
-class MyTest: StringSpec() {
-    // do mockkStatic
-}
-```
----
-
-Sometimes we must use @DoNotParallelize
-
-```kotlin
-@DoNotParallelize
-class TestUsingItemsTable: StringSpec() {
-    // setup/teardown test data in items table
-}
-
-@DoNotParallelize
-class AnotherTestUsingItemsTable: StringSpec() {
-    // setup/teardown test data in orders and items tables
-}
-```
-
----
 
 Thank you!
 <br/>
