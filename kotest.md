@@ -12,12 +12,15 @@ Kotest is modern, flexible, and very powerful. When used properly, it can make o
 
 #### First example: match lists where elements are data classes with many fieds
 
-```kotlin
+```
 listOf(...) shouldBe listOf(...)
 ```
 with `shouldBe`, not easy to see what exactly is different
 
-<img src="match-lists0.png" />
+```kotlin
+Expected :[SpaceShip(name=Millennium Falcon, description=Han Solo ship, range=10, capacity=10, serialNumber=123456), SpaceShip(name=Ghost, description=seen in Rogue One, range=10, capacity=10, serialNumber=Unknown), SpaceShip(name=CR90 corvette, description=Blockade Runner, range=10, capacity=10, serialNumber=123456), SpaceShip(name=CR90 corvette, description=Blockade Runner, range=10, capacity=10, serialNumber=123356)]
+Actual   :[SpaceShip(name=CR90 corvette, description=Blockade Runner, range=10, capacity=10, serialNumber=123457), SpaceShip(name=Millennium Falcon, description=Han Solo ship, range=10, capacity=10, serialNumber=123456), SpaceShip(name=Ghost, description=seen in Rogue One, range=10, capacity=10, serialNumber=Unknown), SpaceShip(name=CR90 corvette, description=Blockade Runner, range=10, capacity=10, serialNumber=123456), SpaceShip(name=CR90 corvette, description=Blockade Runner, range=10, capacity=10, serialNumber=123457)]
+```
 
 ---
 
@@ -29,8 +32,8 @@ with `shouldBe`, not easy to see what exactly is different
 
 ---
 
-### It's a common problem
-#### Let's do something about it
+### Matching lists a common problem
+#### Let's improve it
 
 I am not a visionary. I'm an engineer. I'm happy with the people who are wandering around looking at the stars but I am looking at the ground and I want to fix the pothole before I fall in.
 
@@ -53,7 +56,6 @@ Linus Torvalds
 ##### Lessons learned:
 
 * Kotest is designed and built by a committee
-* Not very consistent, both inside and outside
 * But it's a committee of us practitioners 
 * 377 contributors, 4.5K stars on GitHub
 * If you have a problem, maybe kotest already has a solution
@@ -98,9 +100,11 @@ Double Numbers Are Not Precise - be specific enough, but not too much
 
 <img src="doubleNotPrecise.png" />
 
+Similar matchers for temporal types
+
 ---
 
-Let's refactor a test to be more specific and less fragile
+Let's apply this knowledge - refactor a test to be more specific and less fragile
 
 ---
 
