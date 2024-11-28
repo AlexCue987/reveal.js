@@ -424,9 +424,36 @@ Or we can design away the need to mutate.
 
 ---
 
-#### Do not mutate shared resource
+#### Design away the need to mutate
 
-Even though Kotest has tools to deal with this problem, we should consider designing it away:
+```kotlin
+fun interface HasNow { fun now(): LocalDateTime }
+
+class MyService(private val hasNow: HasNow) {
+    fun printNow() = println(hasNow.now())
+}
+
+class HasNowTest: StringSpec() {
+    init {
+        "wired for prod" {
+            val wiredForProd = MyService { LocalDateTime.now() }
+            wiredForProd.printNow()
+        }
+        "wired for tests" {
+            val wiredForProd = MyService { 
+                LocalDateTime.of(2024, 11, 28, 1, 2, 3) 
+            }
+            wiredForProd.printNow()
+        }
+    }
+}
+```
+
+---
+
+#### Alternatively, use a wrapper
+
+If the frameworks requires it, we may have to use a wrapper:
 ```kotlin
 class WallClockWrapper(
     fun now() = LocalDateTime.now()
