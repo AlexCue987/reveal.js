@@ -4,6 +4,8 @@
 
 ---
 
+#### Agenda
+
 Kotest is modern, flexible, and very powerful. When used properly, it can make our life much easier. But sometimes we need to design away the need to use complex tools.
 
 <img src="many-tools.png" height="50%" width="50%"/>
@@ -47,13 +49,7 @@ Test fails because elements are in wrong order
 
 ---
 
-## Match Two Slices
-Matcher finds two slices that match exactly
-<img src="match-two-slices.png" />
-
----
-
-##### Lessons learned:
+##### TL;DR:
 
 * Kotest is designed and built by a committee
 * But it's a committee of us practitioners 
@@ -62,7 +58,10 @@ Matcher finds two slices that match exactly
 
 ---
 
-Let's return to matching collections - kotest has much more to offer.
+Let's return to matching collections - kotest has much more to offer. 
+<br/>
+<br/>
+And we can spend a lot of time trying to figure out what exactly is different.
 
 ---
 
@@ -84,7 +83,7 @@ How to match ordered collections if order is not completely predictable
 
 ---
 
-How to be not too specific when we match numbers
+Comparing _actual_ vs. _expected_, match **WHAT** we did, not **HOW** we did it
 
 ---
 
@@ -104,9 +103,11 @@ Similar matchers for temporal types
 
 ---
 
-Let's apply this knowledge.
+Let's move on to another example.
 <br/>
-Scenario 1. refactor a test to be more specific and less fragile
+Scenario 1.
+<br/>
+Refactor a test to be more specific and less fragile.
 
 ---
 
@@ -146,7 +147,7 @@ Scenario 1: `shouldEqualJson` is Specialized, More Robust
 ---
 
 
-Scenario 1: `shouldEqualJson` is Specialized, More Robust, but
+Scenario 1: `shouldEqualJson` is Specialized, More Robust, **BUT**
 
 if we add a new field to the object being serialized, the test will fail:
 
@@ -162,7 +163,7 @@ toPayload(
 
 #### Scenario 1: why do we even need this test? what exactly are we verifying?
 
-We use a very common library to serialize objects to JSON. 
+We use a very common library, `jackson`, to serialize objects to JSON. 
 <br/>
 <br/>
 We should not be testing that library.
@@ -255,19 +256,13 @@ assertSoftly {
 
 Scenario 2.
 <br/>
-Let's talk more about tests that are easy to maintain.
+Let's talk more about building tests that are easy to maintain.
 <br/>
 <br/>
-When a change to code causes too many changes to tests, this may be a code smell.
+When a change to code causes too many changes to tests, this may be a code smell, not a problem with tests.
 <br/>
 <br/>
-We might need to refactor the code.
-
----
-
-Scenario 2: Tests can be fragile because tight coupling in code being tested
-
-<img src="canContain-works.png"  height="75%" width="75%"/>
+We might need to refactor the code - and the tests will become more maintainable.
 
 ---
 
@@ -277,15 +272,19 @@ Scenario 2: `canContain` should depend only on dimensions of the box and the ele
 
 ---
 
-Scenario 2: Add an irrelevant field, need to update test
+Scenario 2:Tight coupling in code being tested
 
-<img src="must-add-field.png"  height="75%" width="75%"/>
+<img src="canContain-works.png"  height="75%" width="75%"/>
+
+Of course, in reality there will be more tests
 
 ---
 
-Scenario 2: Use exemplar instance and `copy`
+Scenario 2: Add an irrelevant field, need to update test.
+<br/>
+And this test should not care about the color of the box.
 
-<img src="use-exemplar-instance.png"  height="75%" width="75%"/>
+<img src="must-add-field.png"  height="75%" width="75%"/>
 
 ---
 
@@ -309,7 +308,7 @@ Scenario 2: less fragile test
 ---
 
 Scenario 3.
-When writing self-explanatory tests helps to figure out what exactly failed.
+Writing self-explanatory tests helps to figure out what exactly failed.
 
 ---
 
@@ -409,16 +408,21 @@ val localTime = LocalDateTime.of(2022, 4, 27, 12, 34, 56)
 every { LocalDateTime.now(any<Clock>()) } returns localTime
 ```
 
-while code on another thread is using 
+while code/tests on another thread is using 
 ```kotlin
 LocalDateTime.now()
 ```
-
+So a completely unrelated change breaks a test, intermittently.
 ---
 
-When we mock a static function, we may mutate a shared resource. And when we run tests in parallel, we share that mutable resource.
+When we mock a static function, we in fact mutate a shared resource. 
+<br/>
+<br/>
+And when we run tests in parallel, we share that mutable resource.
+<br/>
 <br/>
 We can use `@DoNotParallelize` as before.
+<br/>
 <br/>
 Or we can design away the need to mutate.
 
